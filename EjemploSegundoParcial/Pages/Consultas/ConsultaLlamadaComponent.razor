@@ -1,14 +1,122 @@
-﻿@using EjemploSegundoParcial.BLL
+﻿@page "/consultaLlamada"
+@using EjemploSegundoParcial.BLL
 @using EjemploSegundoParcial.Models
 
 @inject IToastService toast
 
-<EditForm>
+
+    <div class="card">
+        <div class="card-header">
+            <h3>Consulta de Llamadas</h3>
+        </div>
+
+        <div class="card-body">
+            <form>
+                <div class="form-row">
+                    <div class="col">
+                        <label>FILTRO:</label>
+                        <select class="form-control" @bind="filtroSeleccionado">
+                            <option value="1">Todos</option>
+                            <option value="2">ID</option>
+                            <option value="3">Total</option>
+                        </select>
+                    </div>
+
+                    
+                    <div class="col">
+                        <label>CRITERIO:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" @bind="criterio"/> 
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-primary" @onclick="Consultar">Consultar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <table class="table">
+                   <thead>
+                       <tr>
+                           <th>ID</th>
+                           <th>FECHA</th>
+                           <th>TOTAL</th>
+                       </tr>
+                   </thead>
+                    <tbody>
+                       @foreach (var item in lista)
+                        {
+                            <tr>
+                                <td>@item.llamadaId</td>
+                                <td>@item.fecha</td>
+                                <td>@item.total</td>
+                            </tr>
+                        }
+                    </tbody>
+                   
+                </table>
+            </form>
+        </div>
 
 
+    </div>
 
 
-</EditForm>
 @code {
+
+    public int filtroSeleccionado { get; set; }
+    public string criterio { get; set; }
+    List<Llamada> lista = new List<Llamada>();
+
+
+    private void Consultar()
+    {
+        switch (filtroSeleccionado)
+        {
+            case 1:
+                lista = LlamadaBLL.GetList(p =>true);
+                break;
+
+            case 2:
+                int id = GetId();
+                lista = LlamadaBLL.GetList(p => p.llamadaId == id);
+                break;
+            case 3:
+                decimal total = GetTotal();
+                lista = LlamadaBLL.GetList(p => p.total == total);
+                break;
+        }
+    }
+
+    private int GetId()
+    {
+        int id = 0;
+        try
+        {
+            id = Convert.ToInt32(criterio);
+            return id;
+        }
+        catch (Exception)
+        {
+
+            toast.ShowError("El id debe ser numerico");
+        }
+        return id;
+    }
+
+    private decimal GetTotal()
+    {
+        decimal total = 0;
+        try
+        {
+            total = Convert.ToDecimal(criterio);
+            return total;
+        }
+        catch (Exception)
+        {
+
+            toast.ShowError("El total debe ser numerico");
+        }
+        return total;
+    }
 
 }
