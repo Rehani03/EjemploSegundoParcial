@@ -1,0 +1,270 @@
+﻿@page "/llamada"
+@page "/llamada/{llamadaId:int}"
+@using EjemploSegundoParcial.BLL
+@using EjemploSegundoParcial.Models
+
+@inject IToastService toast
+
+<EditForm Model="llamada" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator/>
+
+    <section class="form-register">
+        <div class="card">
+
+            <div class="card-header">
+                <h3>Registro de Llamadas</h3>
+            </div>
+
+            <div class="card-body">
+                <form>
+                    <div class="form-group align-items-center">
+                        <label>ID:</label>
+                        <div class="form-row">
+                            <div class="col">
+                                <div class="input-group">
+                                    <InputNumber @bind-Value="llamada.llamadaId" class="form-control col-4" />
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-primary" @onclick="Buscar">Buscar</button>
+                                    </div>
+                                    <ValidationMessage For="(()=>llamada.llamadaId)" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>FECHA:</label>>
+                        <InputDate @bind-Value="llamada.fecha" class="form-control"/>
+                        <ValidationMessage For="(()=>llamada.fecha)"/>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-row">
+                            <div class="col">
+                                <label>PAIS:</label>
+                                <select @bind="paisSeleccionado" @onclick="ObtenerPrecio" class="form-control">
+                                    @foreach (var item in listaPais)
+                                    {
+                                        <option value="@item.paisId">@item.pais</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col">
+                                <label>PRECIO:</label>
+                                <InputNumber class="form-control" @bind-Value="PrecioObtenido" />
+                            </div>
+
+                            <div class="col">
+                                <label>DURACION:</label>
+                                <div class="input-group">
+                                    <InputNumber class="form-control" @bind-Value="duracion" />
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-info" @onclick="Agregar">Añadir</button>
+                                    </div>
+                                </div>
+
+                            </div>
+
+
+
+                        </div>
+                    </div>
+
+                    
+                    <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>PAIS Id</th>
+                                    <th>PAIS</th>
+                                    <th>PRECIO</th>
+                                    <th>DURACION</th>
+                                    <th>IMPORTE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                              @foreach (var item in llamada.Detalles)
+                               {
+                                    <tr>
+                                        <td>@item.paisId</td>
+                                        <td>@PaisBLL.Buscar(item.paisId).pais</td>
+                                        <td>@item.precio</td>
+                                        <td>@item.duracion</td>
+                                        <td>@(item.duracion * item.precio)</td>
+                                        <td><button type="button" class="btn btn-outline-danger" @onclick="(()=>Remover(item))">Remover</button></td>
+                                    </tr>
+                               }
+                            </tbody>
+
+                    </table>
+
+                    <div class="form-group">
+                        <label>TOTAL:</label>
+                        <InputNumber @bind-Value="llamada.total" class="form-control"/>
+                        <ValidationMessage For="(()=>llamada.total)"/>
+                    </div>
+
+                </form>
+
+                <div class="card-footer">
+                    <div class="form-group text-center" display: inline-block>
+                        <button type="button" class="btn btn-secondary" @onclick ="Nuevo"> Nuevo</button>
+                        <button type="submit" class="btn btn-success">Guardar</button>
+                        <button type="button" class="btn btn-danger" @onclick="Eliminar">Eliminar</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+
+</EditForm>
+
+@code {
+
+    Llamada llamada = new Llamada();
+    List<Pais> listaPais = new List<Pais>();
+    public decimal duracion { get; set; }
+    public int paisSeleccionado { get; set; }
+    public decimal PrecioObtenido { get; set; }
+
+    [Parameter]
+    public int llamadaId { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (llamadaId > 0)
+        {
+            var aux = LlamadaBLL.Buscar(llamadaId);
+            if (aux != null)
+            {
+                this.llamada = aux;
+            }
+        }
+        listaPais = PaisBLL.GetList(p => true);
+    }
+
+
+    public void Guardar()
+    {
+        bool guardado = false;
+
+        if (llamada.Detalles.Count() == 0)
+        {
+            toast.ShowInfo("Debe agregar algun elemento al detalle.");
+            return;
+        }
+        else
+        {
+            guardado = LlamadaBLL.Guardar(llamada);
+            if (guardado)
+            {
+                Nuevo();
+                toast.ShowInfo("Guardado..");
+            }
+            else
+            {
+                toast.ShowError("No fue posible guardar..");
+            }
+        }
+
+    }
+
+    public void Buscar()
+    {
+        var auxLlamda = LlamadaBLL.Buscar(llamada.llamadaId);
+        if (auxLlamda != null)
+        {
+            Nuevo();
+            this.llamada = auxLlamda;
+        }
+    }
+
+    public void Eliminar()
+    {
+        bool eliminado = LlamadaBLL.Eliminar(llamada.llamadaId);
+        if (eliminado)
+        {
+            Nuevo();
+            toast.ShowInfo("Eliminado...");
+        }
+        else
+        {
+            toast.ShowError("No se pudo eliminar..");
+        }
+    }
+
+    public void Nuevo()
+    {
+        this.llamada = new Llamada();
+        PrecioObtenido = 0;
+        paisSeleccionado = 0;
+        duracion = 0;
+        CalcularTotal();
+    }
+
+    public void Agregar()
+    {
+        if(paisSeleccionado == 0)
+        {
+            toast.ShowInfo("Debe elegir un pais.");
+            return;
+        }
+        if(duracion == 0)
+        {
+            toast.ShowInfo("La duracion debe ser mayor a 0");
+            return;
+        }
+        else
+        {
+            this.llamada.Detalles.Add(new LlamadaDetalle
+            {
+                llamadaDetalleId = 0,
+                llamadaId = llamada.llamadaId,
+                paisId = paisSeleccionado,
+                precio = PrecioObtenido,
+                duracion = duracion
+            });
+        }
+
+        CalcularTotal();
+
+    }
+
+    public void Remover(LlamadaDetalle detalle)
+    {
+        try
+        {
+            llamada.Detalles.Remove(detalle);
+            CalcularTotal();
+        }
+        catch (Exception)
+        {
+
+            throw;
+        }
+    }
+
+    private void ObtenerPrecio()
+    {
+        var auxPais = PaisBLL.Buscar(paisSeleccionado);
+        if (auxPais != null)
+        {
+            PrecioObtenido = auxPais.precio;
+        }
+    }
+
+    private void CalcularTotal()
+    {
+        decimal auxTotal = 0;
+        foreach (var item in llamada.Detalles)
+        {
+            auxTotal += (item.precio * item.duracion);
+        }
+
+        this.llamada.total = auxTotal;
+    }
+
+
+}
