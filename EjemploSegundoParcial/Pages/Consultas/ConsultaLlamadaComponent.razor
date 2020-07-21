@@ -1,79 +1,131 @@
 ﻿@page "/consultaLlamada"
+@page "/ConsultaLlamada/{numPagina:int}"
 @using EjemploSegundoParcial.BLL
 @using EjemploSegundoParcial.Models
+@using EjemploSegundoParcial.DAL
 
 @inject IToastService toast
 
 
-    <div class="card">
-        <div class="card-header">
-            <h3>Consulta de Llamadas</h3>
-        </div>
+<div class="card">
+    <div class="card-header">
+        <h3>Consulta de Llamadas</h3>
+    </div>
 
-        <div class="card-body">
-            <form>
-                <div class="form-row">
-                    <div class="col">
-                        <label>FILTRO:</label>
-                        <select class="form-control" @bind="filtroSeleccionado">
-                            <option value="1">Todos</option>
-                            <option value="2">ID</option>
-                            <option value="3">Total</option>
-                        </select>
-                    </div>
+    <div class="card-body">
+        <form>
+            <div class="form-row">
+                <div class="col">
+                    <label>FILTRO:</label>
+                    <select class="form-control" @bind="filtroSeleccionado">
+                        <option value="1">Todos</option>
+                        <option value="2">ID</option>
+                        <option value="3">Total</option>
+                    </select>
+                </div>
 
-                    
-                    <div class="col">
-                        <label>CRITERIO:</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" @bind="criterio"/> 
-                            <div class="input-group-append">
-                                <button type="button" class="btn btn-primary" @onclick="Consultar">Consultar</button>
-                            </div>
+
+                <div class="col">
+                    <label>CRITERIO:</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" @bind="criterio" />
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-primary" @onclick="Consultar">Consultar</button>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <table class="table">
-                   <thead>
-                       <tr>
-                           <th>ID</th>
-                           <th>FECHA</th>
-                           <th>TOTAL</th>
-                       </tr>
-                   </thead>
-                    <tbody>
-                       @foreach (var item in lista)
-                        {
-                            <tr>
-                                <td>@item.llamadaId</td>
-                                <td>@item.fecha</td>
-                                <td>@item.total</td>
-                            </tr>
-                        }
-                    </tbody>
-                   
-                </table>
-            </form>
-        </div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>FECHA</th>
+                        <th>TOTAL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in lista)
+                    {
+                        <tr>
+                            <td>@item.llamadaId</td>
+                            <td>@item.fecha</td>
+                            <td>@item.total</td>
+                        </tr>
+                    }
+                </tbody>
 
-
+            </table>
+        </form>
     </div>
+    <nav aria-label="...">
+        <ul class="pagination pagination-lg">
+            @for (int i = 1; i <= cantidadDePaginas; i++)
+            {
+                <li class="page-item Azul"><a class="page-link Azul" @onclick="OnInitialized" href="consultaLlamada/@i">@i</a></li>
+            }
+            <li class="page-item text-black-50"><a class="page-link text-black-50" @onclick="Salto"> ► </a></li>
+        </ul>
+    </nav>
+
+
+</div>
 
 
 @code {
 
-    public int filtroSeleccionado { get; set; }
-    public string criterio { get; set; }
-    List<Llamada> lista = new List<Llamada>();
+    [Parameter]
+    public int numPagina { get; set; }
 
+
+    private int filtroSeleccionado { get; set; }
+    private string criterio { get; set; }
+    private double cantidadDePaginas { get; set; } = 0;
+    private double cantidadDeLista { get; set; } = 0;
+    private int contador { get; set; }
+    List<Llamada> lista = new List<Llamada>();
+    Pagina pagina = new Pagina();
+
+    protected override void OnInitialized()
+    {
+        ContarPaginas();
+        TomarPaginas();
+        SaltarPagina();
+    }
+
+    private void ContarPaginas()
+    {
+        cantidadDeLista = LlamadaBLL.GetList(p => true).Count();
+        cantidadDePaginas = Math.Ceiling(cantidadDeLista / pagina.mostrarCantidad);
+    }
+
+    private void TomarPaginas()
+    {
+        lista = LlamadaBLL.GetList(p => true);
+        this.lista = LlamadaBLL.GetList(p => true).Take(pagina.mostrarCantidad).ToList();
+    }
+
+    private void SaltarPagina()
+    {
+        contador = numPagina - 1;
+        Salto();
+
+    }
+
+    private void Salto()
+    {
+        contador += pagina.pagina;
+        contador = (contador>=cantidadDePaginas) ? 0: contador;
+
+        lista =LlamadaBLL.GetList(p=>true).Skip(contador * pagina.mostrarCantidad).Take(pagina.mostrarCantidad).ToList();
+    }
 
     private void Consultar()
     {
         switch (filtroSeleccionado)
         {
             case 1:
-                lista = LlamadaBLL.GetList(p =>true);
+                lista = LlamadaBLL.GetList(p => true);
                 break;
 
             case 2:
@@ -118,5 +170,13 @@
         }
         return total;
     }
+
+    public class Pagina
+    {
+        public int pagina { get; set; } = 1;
+        public int mostrarCantidad { get; set; } = 4;
+    }
+
+
 
 }
