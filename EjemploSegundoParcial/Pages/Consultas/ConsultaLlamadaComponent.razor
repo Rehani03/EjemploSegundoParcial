@@ -59,17 +59,16 @@
             </table>
         </form>
     </div>
-    <nav aria-label="...">
+  
+    <div class="card-footer">
         <ul class="pagination pagination-lg">
-            @for (int i = 1; i <= cantidadDePaginas; i++)
-            {
-                <li class="page-item Azul"><a class="page-link Azul" @onclick="OnInitialized" href="consultaLlamada/@i">@i</a></li>
-            }
-            <li class="page-item text-black-50"><a class="page-link text-black-50" @onclick="Salto"> ► </a></li>
+             @for (int i = 1; i <= cantidadDePaginas; i++)
+              {
+                    <li class="page-item Azul"><a class="page-link Azul" @onclick="OnInitialized" href="consultaLlamada/@i">@i</a></li>
+              }
+             <li class="page-item text-black-50"><a class="page-link text-black-50" @onclick="Salto"> ► </a></li>
         </ul>
-    </nav>
-
-
+    </div>
 </div>
 
 
@@ -78,7 +77,7 @@
     [Parameter]
     public int numPagina { get; set; }
 
-
+    //Expression<Func<Llamada, bool>>expression;
     private int filtroSeleccionado { get; set; }
     private string criterio { get; set; }
     private double cantidadDePaginas { get; set; } = 0;
@@ -95,13 +94,14 @@
         SaltarPagina();
     }
 
+
     private void ContarPaginas()
     {
         cantidadDeLista = LlamadaBLL.GetList(p => true).Count();
         cantidadDePaginas = Math.Ceiling(cantidadDeLista / pagina.mostrarCantidad);
     }
 
-    private void ContarPaginas(Expression<Func<Llamada, bool>> expression)
+    private void ContarPaginas(Expression<Func<Llamada, bool>>expression)
     {
         cantidadDeLista = LlamadaBLL.GetList(expression).Count();
         cantidadDePaginas = Math.Ceiling(cantidadDeLista / pagina.mostrarCantidad);
@@ -113,6 +113,12 @@
         this.lista = LlamadaBLL.GetList(p => true).Take(pagina.mostrarCantidad).ToList();
     }
 
+    private void TomarPaginas(Expression<Func<Llamada, bool>> expression)
+    {
+        lista = LlamadaBLL.GetList(expression);
+        this.lista = LlamadaBLL.GetList(expression).Take(pagina.mostrarCantidad).ToList();
+    }
+
     private void SaltarPagina()
     {
         contador = numPagina - 1;
@@ -120,20 +126,28 @@
 
     }
 
+    private void SaltarPagina(Expression<Func<Llamada, bool>> expression)
+    {
+        contador = numPagina - 1;
+        Salto(expression);
+
+    }
+
+
+    private void Salto(Expression<Func<Llamada, bool>> expression)
+    {
+        contador += pagina.pagina;
+        contador = (contador >= cantidadDePaginas) ? 0 : contador;
+
+        this.lista = LlamadaBLL.GetList(expression).Skip(contador * pagina.mostrarCantidad).Take(pagina.mostrarCantidad).ToList();
+    }
+
     private void Salto()
     {
         contador += pagina.pagina;
         contador = (contador>=cantidadDePaginas) ? 0: contador;
 
-        lista =LlamadaBLL.GetList(p=>true).Skip(contador * pagina.mostrarCantidad).Take(pagina.mostrarCantidad).ToList();
-    }
-
-    private void Salto(Expression<Func<Llamada, bool>>expression)
-    {
-        contador += pagina.pagina;
-        contador = (contador >= cantidadDePaginas) ? 0 : contador;
-
-        lista = LlamadaBLL.GetList(expression).Skip(contador * pagina.mostrarCantidad).Take(pagina.mostrarCantidad).ToList();
+        this.lista = LlamadaBLL.GetList(p => true).Skip(contador * pagina.mostrarCantidad).Take(pagina.mostrarCantidad).ToList();
     }
 
     private void Consultar()
@@ -142,17 +156,20 @@
         {
             case 1:
                 lista = LlamadaBLL.GetList(p => true);
+                ContarPaginas(p=>true);
+                TomarPaginas(p => true);
+                SaltarPagina(p => true);
                 break;
-
             case 2:
                 int id = GetId();
-                auxLista = LlamadaBLL.GetList(p => p.llamadaId == id);
-                lista = auxLista;
+                lista = LlamadaBLL.GetList(p => p.llamadaId == id);
                 break;
             case 3:
                 decimal total = GetTotal();
-                auxLista = LlamadaBLL.GetList(p => p.total == total);
-                lista = auxLista;
+                lista = LlamadaBLL.GetList(p => p.total == total);
+                ContarPaginas(p => p.total == total);
+                TomarPaginas(p => p.total == total);
+                SaltarPagina(p => p.total == total);
                 break;
         }
     }
