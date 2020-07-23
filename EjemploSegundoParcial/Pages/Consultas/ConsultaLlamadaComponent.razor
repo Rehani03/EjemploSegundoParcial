@@ -64,7 +64,7 @@
         <ul class="pagination pagination-lg">
              @for (int i = 1; i <= cantidadDePaginas; i++)
               {
-                    <li class="page-item Azul"><a class="page-link Azul" href="consultaLlamada/@i">@i</a></li>
+                    <li class="page-item Azul"><a class="page-link Azul" @onclick="SaltarPagina" href="consultaLlamada/@i">@i</a></li>
               }
              <li class="page-item text-black-50"><a class="page-link text-black-50" @onclick="Salto"> ► </a></li>
         </ul>
