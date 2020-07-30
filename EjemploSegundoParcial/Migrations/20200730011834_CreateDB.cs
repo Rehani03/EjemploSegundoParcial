@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace EjemploSegundoParcial.Migrations
 {
-    public partial class CreateLlamadaDb : Migration
+    public partial class CreateDB : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -33,6 +33,24 @@ namespace EjemploSegundoParcial.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Pais", x => x.paisId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Proveedores",
+                columns: table => new
+                {
+                    ProveedorId = table.Column<int>(nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Nombre = table.Column<string>(maxLength: 50, nullable: false),
+                    RNC = table.Column<string>(nullable: false),
+                    Direccion = table.Column<string>(maxLength: 40, nullable: false),
+                    Telefono = table.Column<string>(maxLength: 10, nullable: false),
+                    TipoNegocio = table.Column<string>(maxLength: 40, nullable: false),
+                    Fecha = table.Column<DateTime>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Proveedores", x => x.ProveedorId);
                 });
 
             migrationBuilder.CreateTable(
@@ -75,6 +93,9 @@ namespace EjemploSegundoParcial.Migrations
 
             migrationBuilder.DropTable(
                 name: "Pais");
+
+            migrationBuilder.DropTable(
+                name: "Proveedores");
 
             migrationBuilder.DropTable(
                 name: "Llamadas");

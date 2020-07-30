@@ -1,0 +1,268 @@
+﻿@page "/Proveedor"
+@page "/Proveedor/{proveedorId:int}"
+@using EjemploSegundoParcial.BLL
+@using EjemploSegundoParcial.Models
+
+
+@inject IToastService toast
+
+@inject IJSRuntime JS
+
+<EditForm Model="proveedor" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+
+    <div class="card">
+
+        <div class="card-header  alert-info">
+            <h3>Registro de Proveedores</h3>
+        </div>
+
+        <div class="card-body">
+
+            <label for="Id">ID</label>
+            <div class="input-group">
+                <InputNumber @bind-Value="proveedor.ProveedorId" class="form-control"></InputNumber>
+                <ValidationMessage For="(() => proveedor.ProveedorId)"></ValidationMessage>
+                <div class="input-group-append">
+                    <button type="button" class="btn btn-primary" @onclick="Buscar"><span class="icon-search"></span>Buscar</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="NOMBRE">NOMBRE</label>
+                <InputText @bind-Value="proveedor.Nombre" class="form-control"></InputText>
+                <ValidationMessage For="(() => proveedor.Nombre)"></ValidationMessage>
+            </div>
+
+            <div class="form-group">
+                <label for="RNC">RNC</label>
+                <InputText @bind-Value="proveedor.RNC" class="form-control"></InputText>
+                <ValidationMessage For="(() => proveedor.RNC)"></ValidationMessage>
+            </div>
+
+            <div class="form-group">
+                <label for="DIRECCION">DIRECCION</label>
+                <InputText @bind-Value="proveedor.Direccion" class="form-control"></InputText>
+                <ValidationMessage For="(() => proveedor.Direccion)"></ValidationMessage>
+            </div>
+
+            <div class="form-group">
+                <label for="TELEFONO">TELEFONO</label>
+                <InputText @bind-Value="proveedor.Telefono" class="form-control"></InputText>
+                <ValidationMessage For="(() => proveedor.Telefono)"></ValidationMessage>
+            </div>
+
+            <div class="form-group">
+                <label for="EMAIL">TIPO DE NEGOCIO</label>
+                <InputText @bind-Value="proveedor.TipoNegocio" class="form-control"></InputText>
+                <ValidationMessage For="(() => proveedor.TipoNegocio)"></ValidationMessage>
+            </div>
+
+            <div class="form-group">
+                <label for="FECHA">FECHA</label>
+                <InputDate @bind-Value="proveedor.Fecha" class="form-control"></InputDate>
+                <ValidationMessage For="(() => proveedor.Fecha)"></ValidationMessage>
+            </div>
+        </div>
+
+        <div class="card-footer">
+            <div class="form-group text-center" display: inline-block>
+                <button type="button" class="btn btn-secondary" @onclick="Nuevo"><span class="icon-add"></span> Nuevo </button>
+                <button type="submit" class="btn btn-success"><span class="icon-save"></span> Guardar </button>
+                <button type="button" class="btn btn-danger" @onclick="Eliminar"><span class="icon-delete_forever"></span> Eliminar </button>
+            </div>
+        </div>
+    </div>
+
+</EditForm>
+
+
+@code {
+
+    [Parameter]
+    public int proveedorId { get; set; }
+
+    Proveedor proveedor = new Proveedor();
+
+    public class AuxProveedor
+    {
+        public string nombre { get; set; }
+        public string rnc { get; set; }
+        public string telefono { get; set; }
+    }
+
+    AuxProveedor aux;
+
+    protected override void OnInitialized()
+    {
+        Nuevo();
+        //var aux = Buscar(proveedorId);
+        Buscar(proveedorId);
+    }
+
+    private void Nuevo()
+    {
+        this.proveedor = new Proveedor();
+    }
+
+    private void Guardar()
+    {
+
+        bool paso = false;
+        //var aux = await ValidarCamposEnDB();
+
+        //if (!aux)
+        //    return;
+        if (!ValidarCamposEnDB())
+            return;
+
+        if (proveedor.ProveedorId == 0)
+            paso = ProveedorBLL.Guardar(proveedor);
+        else
+        {
+            if (ProveedorBLL.ExisteParaModificar(proveedor.ProveedorId))
+            {
+                paso = ProveedorBLL.Guardar(proveedor);
+            }
+        }
+
+        if (paso)
+        {
+            Nuevo();
+            toast.ShowSuccess("Guardado..");
+            //await JS.Confirmar("top-center", "success", "Guardado Exitosamente.", "Buen trabajo", false, 2000);
+        }
+        else
+        {
+            toast.ShowError("No fue posibe guardar");
+            //await JS.Confirmar("top-center", "error", "Error", "No fue posible guardar el proveedor.", false, 2000);
+        }
+
+    }
+
+    private void Eliminar()
+    {
+        bool elimino;
+
+        //if (await JS.ConfirmDelete("Confirmar", "¿Esta seguro que desea eliminar este cliente?", "question"))
+        //{
+        //    elimino = ProveedorBLL.Eliminar(proveedor.ProveedorId);
+
+        //    if (elimino)
+        //    {
+        //        Nuevo();
+        //        await JS.Confirmar("top-center", "success", "Eliminado", "Eliminado correctamente", false, 2000);
+        //    }
+        //    else
+        //        await JS.Confirmar("top-center", "error", "Error", "No fue posible eliminar el cliente", false, 2000);
+        //}
+
+        elimino = ProveedorBLL.Eliminar(proveedor.ProveedorId);
+    }
+
+    private void Buscar()
+    {
+        var encontrado = ProveedorBLL.Buscar(proveedor.ProveedorId);
+        if (encontrado != null)
+        {
+            this.proveedor = encontrado;
+            IgualarCampos();
+        }
+        else
+        {
+            toast.ShowInfo("No encontrado.");
+            //await JS.Confirmar("top-center", "info", "Aviso", "Proveedor no encontrado.", false, 2000);
+        }
+
+    }
+
+
+    private void Buscar(int id)
+    {
+        if (id > 0)
+        {
+            var auxProveedor = ProveedorBLL.Buscar(id);
+            if (auxProveedor != null)
+            {
+                this.proveedor = auxProveedor;
+                IgualarCampos();
+            }
+            else
+            {
+                toast.ShowInfo("Proveedor no encontrado.");
+            }
+            //await JS.Confirmar("top-center", "info", "Aviso", "Cliente no encontrada", false, 2000);
+        }
+    }
+
+    private void IgualarCampos()
+    {
+        aux = new AuxProveedor();
+        aux.nombre = proveedor.Nombre;
+        aux.rnc = proveedor.RNC;
+        aux.telefono = proveedor.Telefono;
+    }
+
+    private bool ValidarCamposEnDB()
+    {
+        bool paso = true;
+
+        if (proveedor.ProveedorId == 0)
+        {
+            if (ProveedorBLL.YaExiste(proveedor.Nombre, 1)) //Nombre
+            {
+                //await JS.Confirmar("top-center", "info", "Aviso", "El nombre de este proveedor ya esta registrado.", false, 2000);
+                toast.ShowInfo("El nombre de este proveedor ya esta en la DB");
+                paso = false;
+            }
+            if (ProveedorBLL.YaExiste(proveedor.RNC, 2))
+            {
+                //await JS.Confirmar("top-center", "info", "Aviso", "Ya existe un proveedor con el RNC colocado.", false, 2000);
+                toast.ShowInfo("El nombre de este proveedor ya esta en la DB");
+                paso = false;
+            }
+            if (ProveedorBLL.YaExiste(proveedor.Telefono, 3))
+            {
+                //await JS.Confirmar("top-center", "info", "Aviso", "Ya existe un proveedor con el Telefono colocado.", false, 2000);
+                toast.ShowInfo("El telefono de este proveedor ya esta en la DB");
+                paso = false;
+            }
+        }
+        else
+        {   //nombre
+            if (aux.nombre != proveedor.Nombre)
+            {
+                if (ProveedorBLL.YaExiste(proveedor.Nombre, 1)) //Nombre
+                {
+                    //await JS.Confirmar("top-center", "info", "Aviso", "El nombre de este proveedor ya esta registrado.", false, 2000);
+                    toast.ShowInfo("El nombre de este proveedor ya esta en la DB");
+                    paso = false;
+                }
+            }
+            //rnc
+            if (aux.rnc != proveedor.RNC)
+            {
+                if (ProveedorBLL.YaExiste(proveedor.RNC, 2))
+                {
+                    //await JS.Confirmar("top-center", "info", "Aviso", "Ya existe un proveedor con el RNC colocado.", false, 2000);
+                    toast.ShowInfo("El nombre de este proveedor ya esta en la DB");
+                    paso = false;
+                }
+            }
+            //telefono
+            if (aux.telefono != proveedor.Telefono)
+            {
+                if (ProveedorBLL.YaExiste(proveedor.Telefono, 3))
+                {
+                    //await JS.Confirmar("top-center", "info", "Aviso", "Ya existe un proveedor con el Telefono colocado.", false, 2000);
+                    toast.ShowInfo("El telefono de este proveedor ya esta en la DB");
+                    paso = false;
+                }
+            }
+        }
+
+        return paso;
+    }
+
+
+}

@@ -16,6 +16,8 @@ namespace EjemploSegundoParcial.DAL
 
         public DbSet<Pais> Pais { get; set; }
         public DbSet<Llamada> Llamadas { get; set; }
+
+        public DbSet<Proveedor> Proveedores { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Pais>().HasData(new Pais
